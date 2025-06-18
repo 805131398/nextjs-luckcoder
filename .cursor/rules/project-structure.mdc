@@ -3,26 +3,148 @@ description:
 globs: 
 alwaysApply: false
 ---
-# 项目结构说明
+# Next.js 项目结构说明（基于 nextjs-luckcoder）
 
-本项目为基于 [Next.js](mdc:https:/nextjs.org) 的前端应用，使用 TypeScript、React 及 TailwindCSS 进行开发。
+本项目采用 Next.js 框架，目录结构遵循官方推荐规范，结合 [Next.js 官方文档](mdc:https:/nextjs.org/docs) 进行说明。
 
 ## 主要目录与文件
-- `app/`：Next.js 应用主目录，包含页面、全局布局和样式。
-  - `page.tsx`：首页页面组件。
-  - `layout.tsx`：全局布局组件，包含自定义导航栏。
-  - `globals.css`：全局样式文件，集成 TailwindCSS。
-  - `layout/navBar.tsx`：导航栏组件示例。
-- `public/`：静态资源目录，存放图片、SVG 等文件。
-- `package.json`：项目依赖与脚本配置。
-- `tsconfig.json`：TypeScript 配置文件。
-- `next.config.ts`：Next.js 框架配置。
-- `postcss.config.mjs`：PostCSS 及 TailwindCSS 配置。
-- `eslint.config.mjs`：ESLint 代码规范配置。
-- `README.md`：项目说明文档。
 
-## 入口说明
-- 项目入口为 `app/page.tsx`，全局布局由 `app/layout.tsx` 控制。
-- 静态资源可通过 `/public` 目录直接访问。
+- `app/`  
+  Next.js 15+ 推荐的 App Router 目录，包含页面、布局、全局样式等。  
+  - `layout/`  
+    存放全局或局部布局组件，如导航栏（`navBar.tsx`）。
+  - `layout.tsx`  
+    应用的根布局文件，定义页面的通用结构。
+  - `page.tsx`  
+    应用的首页（根路由页面）。
+  - `globals.css`  
+    全局样式表。
+  - `favicon.svg`  
+    网站图标。
 
-如需了解 Next.js 相关开发规范与最佳实践，请参考 [Next.js 官方文档](mdc:https:/nextjs.org/docs)。
+- `public/`  
+  静态资源目录，存放图片、SVG 等文件，访问路径为 `/` 开头。
+
+- `package.json`、`package-lock.json`  
+  Node.js 项目依赖和脚本配置文件。
+
+- `tsconfig.json`  
+  TypeScript 配置文件。
+
+- `next.config.ts`  
+  Next.js 框架配置文件。
+
+- `eslint.config.mjs`  
+  ESLint 代码规范配置。
+
+- `postcss.config.mjs`  
+  PostCSS 配置文件。
+
+- `README.md`  
+  项目说明文档。
+
+## 目录结构参考
+
+```text
+nextjs-luckcoder/
+  ├─ app/
+  │    ├─ layout/
+  │    │    └─ navBar.tsx
+  │    ├─ layout.tsx
+  │    ├─ page.tsx
+  │    ├─ globals.css
+  │    └─ favicon.svg
+  ├─ public/
+  │    ├─ file.svg
+  │    ├─ globe.svg
+  │    ├─ L.svg
+  │    ├─ next.svg
+  │    ├─ vercel.svg
+  │    └─ window.svg
+  ├─ package.json
+  ├─ package-lock.json
+  ├─ tsconfig.json
+  ├─ next.config.ts
+  ├─ eslint.config.mjs
+  ├─ postcss.config.mjs
+  └─ README.md
+```
+
+## 参考文档
+- [Next.js 官方文档](mdc:https:/nextjs.org/docs)
+
+## Auth.js（NextAuth.js）集成说明
+
+本项目计划集成 [Auth.js](mdc:https:/authjs.dev/getting-started)（NextAuth.js）用于用户认证、登录、注册和会话管理。
+
+### 主要用途
+- 支持多种认证方式（OAuth、邮箱魔法链接、用户名密码、WebAuthn 等）
+- 支持多种第三方登录（如 GitHub、Google、Twitter、Apple、Discord 等）
+- 可选集成数据库适配器（如 Prisma、Drizzle、Supabase 等）以持久化用户数据
+- 提供会话管理、保护资源、定制登录/注册页面等能力
+
+### 主要目录与文件（集成后建议结构）
+- `app/api/auth/[...nextauth].ts`  
+  NextAuth.js API 路由，处理认证相关的所有后端逻辑（如登录、回调、会话等）。
+- `app/(auth)/login/page.tsx`  
+  登录页面（可自定义 UI）。
+- `app/(auth)/register/page.tsx`  
+  注册页面（可自定义 UI）。
+- `lib/auth/`  
+  存放认证相关的工具函数、配置文件等。
+- `lib/prisma/`  
+  （如使用 Prisma）数据库适配器相关配置。
+
+### 常用配置要点
+- 在 `next.config.ts` 中无需特殊配置，除非需要自定义 API 路由行为。
+- 在 `package.json` 中需添加 `next-auth` 依赖。
+- 环境变量需配置如 `NEXTAUTH_URL`、`NEXTAUTH_SECRET` 及各 OAuth Provider 的 client id/secret。
+- 可在 `app/layout.tsx` 或页面组件中通过 `useSession`、`getServerSession` 获取用户会话信息。
+
+### 开发参考
+- 认证方式可选：OAuth、邮箱魔法链接、用户名密码、WebAuthn。
+- 支持自定义登录、注册、错误等页面。
+- 支持多数据库适配器，推荐使用 Prisma 进行用户数据持久化。
+- 详细开发指南见 [Auth.js 官方文档](mdc:https:/authjs.dev/getting-started)。
+
+> 本节内容为后续集成 Auth.js（NextAuth.js）做准备，便于团队成员了解认证相关目录、配置和开发要点。
+
+> 本规则文件用于帮助开发者快速理解本项目的结构和各部分作用，便于协作和维护。
+
+## shadcn/ui 组件库集成说明
+
+本项目集成了 [shadcn/ui](mdc:https:/ui.shadcn.com/docs/components) 组件库，提供现代、灵活、可定制的 React UI 组件，适用于 Next.js 等主流框架。
+
+### 主要特性
+- 丰富的基础和高级 UI 组件（如 Button、Card、Dialog、Avatar、Tabs、Table、Dropdown Menu 等）
+- 支持深色模式、响应式设计
+- 组件样式基于 Tailwind CSS，易于自定义和主题扩展
+- 适配 Next.js 15+ App Router 架构
+- 组件代码可直接导入到项目中，支持按需引入
+
+### 常用组件举例
+- Button（按钮）
+- Card（卡片）
+- Dialog（对话框）
+- Avatar（头像）
+- Tabs（标签页）
+- Table（表格）
+- Dropdown Menu（下拉菜单）
+- Alert（警告提示）
+- Tooltip（气泡提示）
+- Input（输入框）、Textarea（多行输入）
+- Switch（开关）、Checkbox（复选框）、Radio Group（单选组）
+- Pagination（分页）
+- Skeleton（骨架屏）
+- Toast（全局消息提示）
+
+### 目录与使用建议
+- 组件可通过 shadcn/ui 官方 CLI 或手动复制方式集成到 `components/` 目录下
+- 推荐将自定义或二次封装组件统一放在 `components/` 目录，便于维护
+- 组件样式依赖 Tailwind CSS，确保 `tailwind.config.js` 配置正确
+- 详细用法、API 及示例请参考 [shadcn/ui 官方文档](mdc:https:/ui.shadcn.com/docs/components)
+
+### 参考文档
+- [shadcn/ui 组件库文档](mdc:https:/ui.shadcn.com/docs/components)
+
+> 本节内容为团队成员后续开发提供 UI 组件选型、用法和扩展的参考。
