@@ -26,6 +26,7 @@ export default function NavBar() {
         <nav className="w-full flex items-center justify-between px-4 py-2 bg-white dark:bg-black shadow-sm sticky top-0 z-50">
             <div className="flex items-center gap-4">
                 <Link href="/" className="text-lg font-bold hover:opacity-80">首页</Link>
+                <Link href="/user/profile" className="text-lg font-bold hover:opacity-80">个人中心</Link>
             </div>
             <div>
                 {session ? (
@@ -43,7 +44,17 @@ export default function NavBar() {
                         </DropdownMenuContent>
                     </DropdownMenu>
                 ) : (
-                    <Button onClick={() => signIn("github")}>GitHub 登录</Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button>登录</Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => signIn("github")}>GitHub 登录</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => signIn("google")}>Google 登录</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => {/* TODO: 邮箱验证码登录弹窗 */}}>邮箱验证码登录</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 )}
             </div>
         </nav>
