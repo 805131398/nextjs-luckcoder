@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,35 +25,67 @@ export default function NavBar() {
 
     return (
         <nav className="w-full flex items-center justify-between px-4 py-2 bg-white dark:bg-black shadow-sm sticky top-0 z-50">
-            <div className="flex items-center gap-4">
-                <Link href="/" className="text-lg font-bold hover:opacity-80">首页</Link>
-                <Link href="/user/profile" className="text-lg font-bold hover:opacity-80">个人中心</Link>
+            <div className="flex items-center gap-2 sm:gap-4">
+                <Link href="/" className="text-base sm:text-lg font-bold hover:opacity-80">首页</Link>
+                <Link href="/user/profile" className="text-base sm:text-lg font-bold hover:opacity-80">个人中心</Link>
             </div>
-            <div>
+            <div className="relative">
                 {session ? (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Avatar className="cursor-pointer">
+                            <Avatar className="cursor-pointer h-8 w-8 sm:h-10 sm:w-10">
                                 <AvatarImage src={userAvatar} alt={userName} />
-                                <AvatarFallback>{userName?.[0] || "U"}</AvatarFallback>
+                                <AvatarFallback className="text-xs sm:text-sm">{userName?.[0] || "U"}</AvatarFallback>
                             </Avatar>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem disabled>{userName}</DropdownMenuItem>
+                        <DropdownMenuContent 
+                            align="end" 
+                            className="w-48 sm:w-56"
+                            sideOffset={8}
+                            alignOffset={-8}
+                        >
+                            <DropdownMenuItem disabled className="text-sm">
+                                {userName}
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => signOut()}>退出登录</DropdownMenuItem>
+                            <DropdownMenuItem 
+                                onClick={() => signOut()}
+                                className="text-sm cursor-pointer"
+                            >
+                                退出登录
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 ) : (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button>登录</Button>
+                            <Button size="sm" className="text-sm px-3 py-1 sm:px-4 sm:py-2">登录</Button>   
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => signIn("github")}>GitHub 登录</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => signIn("google")}>Google 登录</DropdownMenuItem>
+                        <DropdownMenuContent 
+                            align="end" 
+                            className="w-48 sm:w-56"
+                            sideOffset={8}
+                            alignOffset={-8}
+                        >
+                            <DropdownMenuItem 
+                                onClick={() => signIn("github")}
+                                className="text-sm cursor-pointer"
+                            >
+                                GitHub 登录
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                                onClick={() => signIn("google")}
+                                className="text-sm cursor-pointer"
+                            >
+                                Google 登录
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => {/* TODO: 邮箱验证码登录弹窗 */}}>邮箱验证码登录</DropdownMenuItem>
+                            <DropdownMenuItem 
+                                onClick={() => {redirect("/login")}}
+                                className="text-sm cursor-pointer"
+                            >
+                                邮箱验证码登录
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 )}
