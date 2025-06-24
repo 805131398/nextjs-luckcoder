@@ -8,87 +8,117 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Mail, Shield } from "lucide-react";
+import { Loader2, Mail, Shield, Smartphone } from "lucide-react";
+
+const LOGIN_TABS = [
+  { key: "phone_code", label: "手机号验证码登录" },
+  { key: "email", label: "邮箱验证码登录" },
+];
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
+  const [tab, setTab] = useState("phone_code");
+  // 通用状态
   const [isLoading, setIsLoading] = useState(false);
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
 
-  const handleSendCode = async () => {
-    if (!email) {
-      setError("请输入邮箱地址");
-      return;
-    }
+  // 邮箱验证码登录
+  const [email, setEmail] = useState("");
+  const [emailCode, setEmailCode] = useState("");
+  // 手机号验证码登录
+  const [phone, setPhone] = useState("");
+  const [phoneCode, setPhoneCode] = useState("");
 
-    setIsSendingCode(true);
+  // 发送验证码
+  const handleSendCode = async () => {
     setError("");
     setMessage("");
-
-    try {
-      const response = await fetch("/api/auth/send-code", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage(data.message);
-      } else {
-        setError(data.error || "发送验证码失败");
+    if (tab === "email") {
+      if (!email) {
+        setError("请输入邮箱地址");
+        return;
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error: unknown) {
-      setError("网络错误，请稍后重试");
-    } finally {
-      setIsSendingCode(false);
+      setIsSendingCode(true);
+      try {
+        const response = await fetch("/api/auth/send-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        const data = await response.json();
+        if (response.ok) setMessage(data.message);
+        else setError(data.error || "发送验证码失败");
+      } catch {
+        setError("网络错误，请稍后重试");
+      } finally {
+        setIsSendingCode(false);
+      }
+    } else if (tab === "phone_code") {
+      if (!phone) {
+        setError("请输入手机号");
+        return;
+      }
+      setIsSendingCode(true);
+      try {
+        const response = await fetch("/api/auth/send-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone }),
+        });
+        const data = await response.json();
+        if (response.ok) setMessage(data.message);
+        else setError(data.error || "发送验证码失败");
+      } catch {
+        setError("网络错误，请稍后重试");
+      } finally {
+        setIsSendingCode(false);
+      }
     }
   };
 
+  // 登录
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!email || !code) {
-      setError("请输入邮箱和验证码");
-      return;
-    }
-
-    setIsLoading(true);
     setError("");
-
+    setMessage("");
+    setIsLoading(true);
     try {
-      console.log("开始登录，邮箱:", email, "验证码:", code);
-      
-      const result = await signIn("email", {
-        email,
-        code,
-        redirect: false,
-        callbackUrl: "/",
-      });
-
-      console.log("登录结果:", result);
-
-      if (result?.error) {
-        console.error("登录错误:", result.error);
-        setError("验证码错误或已过期，请重新获取");
-      } else if (result?.ok) {
-        console.log("登录成功，跳转到首页");
-        router.push("/");
-        router.refresh();
-      } else {
-        console.log("登录结果未知:", result);
-        setError("登录失败，请稍后重试");
+      if (tab === "email") {
+        if (!email || !emailCode) {
+          setError("请输入邮箱和验证码");
+          return;
+        }
+        const result = await signIn("email", {
+          email,
+          code: emailCode,
+          redirect: false,
+          callbackUrl: "/",
+        });
+        if (result?.error) setError("验证码错误或已过期，请重新获取");
+        else if (result?.ok) {
+          router.push("/");
+          router.refresh();
+        } else setError("登录失败，请稍后重试");
+      } else if (tab === "phone_code") {
+        if (!phone || !phoneCode) {
+          setError("请输入手机号和验证码");
+          return;
+        }
+        const result = await signIn("phone_code", {
+          phone,
+          code: phoneCode,
+          redirect: false,
+          callbackUrl: "/",
+        });
+        if (result?.error) setError("验证码错误或已过期，请重新获取");
+        else if (result?.ok) {
+          router.push("/");
+          router.refresh();
+        } else setError("登录失败，请稍后重试");
       }
-    } catch (error) {
-      console.error("登录异常:", error);
+    } catch {
       setError("登录失败，请稍后重试");
     } finally {
       setIsLoading(false);
@@ -100,62 +130,125 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">登录</CardTitle>
-          <CardDescription className="text-center">
-            使用邮箱验证码登录您的账户
-          </CardDescription>
+          <CardDescription className="text-center">请选择登录方式</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="flex justify-center gap-2 mb-6">
+            {LOGIN_TABS.map((t) => (
+              <Button
+                key={t.key}
+                variant={tab === t.key ? "default" : "outline"}
+                onClick={() => { setTab(t.key); setError(""); setMessage(""); }}
+                size="sm"
+              >
+                {t.label}
+              </Button>
+            ))}
+          </div>
           <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">邮箱地址</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="请输入您的邮箱"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleSendCode}
-              disabled={isSendingCode || !email || isLoading}
-              className="w-full"
-            >
-              {isSendingCode ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  发送中...
-                </>
-              ) : (
-                "获取验证码"
-              )}
-            </Button>
-
-            <div className="space-y-2">
-              <Label htmlFor="code">验证码</Label>
-              <div className="relative">
-                <Shield className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="code"
-                  type="text"
-                  placeholder="请输入6位验证码"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  className="pl-10"
-                  maxLength={6}
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
+            {tab === "email" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="email">邮箱地址</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="请输入您的邮箱"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10"
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSendCode}
+                  disabled={isSendingCode || !email || isLoading}
+                  className="w-full"
+                >
+                  {isSendingCode ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      发送中...
+                    </>
+                  ) : (
+                    "获取验证码"
+                  )}
+                </Button>
+                <div className="space-y-2">
+                  <Label htmlFor="code">验证码</Label>
+                  <div className="relative">
+                    <Shield className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="code"
+                      type="text"
+                      placeholder="请输入6位验证码"
+                      value={emailCode}
+                      onChange={(e) => setEmailCode(e.target.value)}
+                      className="pl-10"
+                      maxLength={6}
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+            {tab === "phone_code" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">手机号</Label>
+                  <div className="relative">
+                    <Smartphone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="请输入您的手机号"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="pl-10"
+                      maxLength={11}
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSendCode}
+                  disabled={isSendingCode || !phone || isLoading}
+                  className="w-full"
+                >
+                  {isSendingCode ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      发送中...
+                    </>
+                  ) : (
+                    "获取验证码"
+                  )}
+                </Button>
+                <div className="space-y-2">
+                  <Label htmlFor="phoneCode">验证码</Label>
+                  <div className="relative">
+                    <Shield className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="phoneCode"
+                      type="text"
+                      placeholder="请输入6位验证码"
+                      value={phoneCode}
+                      onChange={(e) => setPhoneCode(e.target.value)}
+                      className="pl-10"
+                      maxLength={6}
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
             {message && (
               <Alert className="border-green-200 bg-green-50 text-green-800">
                 <AlertDescription className="flex items-center">
@@ -166,17 +259,18 @@ export default function LoginPage() {
                 </AlertDescription>
               </Alert>
             )}
-
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading || !email || !code}
+              disabled={isLoading ||
+                (tab === "email" && (!email || !emailCode)) ||
+                (tab === "phone_code" && (!phone || !phoneCode))
+              }
             >
               {isLoading ? (
                 <>
@@ -188,36 +282,6 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
-
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  或者使用
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <Button
-                variant="outline"
-                onClick={() => signIn("github", { callbackUrl: "/" })}
-                disabled={isLoading}
-              >
-                GitHub
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => signIn("google", { callbackUrl: "/" })}
-                disabled={isLoading}
-              >
-                Google
-              </Button>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>
