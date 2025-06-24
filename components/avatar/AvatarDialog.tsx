@@ -3,11 +3,13 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { createAvatar } from "@dicebear/core";
 import * as styles from "@dicebear/collection";
 import DiceBearAvatarPanel from "./DiceBearAvatarPanel";
 import UploadAvatarPanel from "./UploadAvatarPanel";
+import Image from "next/image";
+import type { Style } from "@dicebear/core";
 
 export interface AvatarData {
   avatarType: "system" | "custom";
@@ -23,54 +25,29 @@ interface AvatarDialogProps {
   initialData: AvatarData;
 }
 
+// 新增 DiceBearAvatarPreview 组件
+function DiceBearAvatarPreview({ style, seed }: { style: string; seed: string }) {
+  try {
+    const styleModule = (styles as Record<string, Style<Record<string, unknown>>>)[style];
+    if (styleModule) {
+      const avatar = createAvatar(styleModule, { seed });
+      const svg = avatar.toString();
+      const dataUri = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+      return (
+        <Avatar className="w-20 h-20 mx-auto mb-2 shadow-lg border-4 border-white bg-white">
+          <Image src={dataUri} alt="预览头像" fill style={{objectFit:'cover'}} />
+        </Avatar>
+      );
+    }
+  } catch {
+    return <Avatar className="w-20 h-20 mx-auto mb-2" />;
+  }
+  return <Avatar className="w-20 h-20 mx-auto mb-2" />;
+}
+
 export default function AvatarDialog({ open, onOpenChange, onSave, initialData }: AvatarDialogProps) {
   const [tab, setTab] = useState<"system" | "custom">(initialData.avatarType);
   const [avatarData, setAvatarData] = useState<AvatarData>(initialData);
-
-  // 生成系统头像预览
-  const systemAvatarSvg = useMemo(() => {
-    console.log("Generating avatar with:", { 
-      seed: avatarData.avatarSeed, 
-      style: avatarData.avatarStyle 
-    });
-    
-    try {
-      const styleModule = (styles as Record<string, unknown>)[avatarData.avatarStyle];
-      console.log("Style module found:", !!styleModule, avatarData.avatarStyle);
-      
-      if (styleModule) {
-        const avatar = createAvatar(styleModule as any, { seed: avatarData.avatarSeed });
-        const svg = avatar.toString();
-        console.log("Generated SVG length:", svg.length);
-        console.log("SVG preview:", svg.substring(0, 100) + "...");
-        return svg;
-      }
-    } catch (error) {
-      console.error('生成头像失败:', error);
-    }
-    return null;
-  }, [avatarData.avatarSeed, avatarData.avatarStyle]);
-
-  // 根据当前选中的 tab 决定预览内容
-  const renderPreview = () => {
-    console.log("renderPreview called:", { 
-      tab, 
-      systemAvatarSvg: !!systemAvatarSvg,
-      systemAvatarSvgLength: systemAvatarSvg?.length,
-      avatarUrl: avatarData.avatarUrl 
-    });
-    
-    if (tab === "system" && systemAvatarSvg) {
-      console.log("Rendering system avatar SVG");
-      return <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: systemAvatarSvg }} />;
-    } else if (tab === "custom" && avatarData.avatarUrl) {
-      console.log("Rendering custom avatar image");
-      return <AvatarImage src={avatarData.avatarUrl} alt="头像预览" />;
-    } else {
-      console.log("Rendering fallback avatar");
-      return <AvatarFallback>U</AvatarFallback>;
-    }
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -78,12 +55,19 @@ export default function AvatarDialog({ open, onOpenChange, onSave, initialData }
         <DialogHeader>
           <DialogTitle>更换头像</DialogTitle>
         </DialogHeader>
-        
-        {/* 头像预览区 */}
+        {/* 头像预览区（顶部大头像） */}
         <div className="flex justify-center mb-6">
-          <Avatar className="w-20 h-20">
-            {renderPreview()}
-          </Avatar>
+          {tab === "system" ? (
+            <DiceBearAvatarPreview style={avatarData.avatarStyle} seed={avatarData.avatarSeed} />
+          ) : (
+            <Avatar className="w-20 h-20">
+              {avatarData.avatarUrl ? (
+                <AvatarImage src={avatarData.avatarUrl} alt="头像预览" />
+              ) : (
+                <AvatarFallback>U</AvatarFallback>
+              )}
+            </Avatar>
+          )}
         </div>
 
         {/* 切换按钮 */}

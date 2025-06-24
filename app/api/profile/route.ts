@@ -40,7 +40,7 @@ export async function GET() {
     
     const user = await prisma.user.findUnique({
         where: whereClause,
-        select: { name: true, email: true, phone: true, image: true, id: true }
+        select: { name: true, email: true, phone: true, image: true, id: true, avatarType: true, avatarStyle: true, avatarSeed: true }
     });
     
     // 查询账户信息

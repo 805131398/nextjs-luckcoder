@@ -20,8 +20,15 @@ import {
     SettingsIcon,
     LogOutIcon,
     GithubIcon,
+    PhoneIcon,
     MailIcon
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createAvatar } from "@dicebear/core";
+import * as styles from "@dicebear/collection";
+import { Buffer } from "buffer";
+import type { Style } from "@dicebear/core";
+import { User } from "next-auth";
 
 // 用户菜单项类型
 export interface UserMenuItem {
@@ -41,8 +48,41 @@ export const userMenuItems: UserMenuItem[] = [
 
 export function UserMenu() {
     const { data: session } = useSession();
-    const userAvatar = session?.user?.image || undefined;
-    const userName = session?.user?.name || "用户";
+    const [profileUser, setProfileUser] = useState<User | null>(null);
+
+    useEffect(() => {
+        if (session) {
+            fetch("/api/profile").then(async (res) => {
+                if (res.ok) {
+                    setProfileUser(await res.json());
+                }
+            });
+        }
+    }, [session]);
+
+    const userName = profileUser?.name || session?.user?.name || "用户";
+
+    // DiceBear 头像渲染
+    let avatarContent = null;
+    if (profileUser?.avatarType === "system" && profileUser.avatarStyle && profileUser.avatarSeed) {
+        try {
+            const styleModule = (styles as Record<string, Style<Record<string, unknown>>>)[profileUser.avatarStyle];
+            if (styleModule) {
+                const svg = createAvatar(styleModule, { seed: profileUser.avatarSeed }).toString();
+                const svgBase64 = typeof window === 'undefined'
+                  ? Buffer.from(svg).toString("base64")
+                  : window.btoa(unescape(encodeURIComponent(svg)));
+                const dataUri = `data:image/svg+xml;base64,${svgBase64}`;
+                avatarContent = <AvatarImage src={dataUri || undefined} alt={userName} className="w-full h-full object-cover" />;
+            }
+        } catch {
+            avatarContent = <AvatarFallback>{userName?.[0] || "U"}</AvatarFallback>;
+        }
+    } else if (profileUser?.image || session?.user?.image) {
+        avatarContent = <AvatarImage src={profileUser?.image || session?.user?.image} alt={userName} className="w-full h-full object-cover" />;
+    } else {
+        avatarContent = <AvatarFallback>{userName?.[0] || "U"}</AvatarFallback>;
+    }
 
     if (session) {
         return (
@@ -50,10 +90,7 @@ export function UserMenu() {
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                         <Avatar className="h-10 w-10">
-                            <AvatarImage src={userAvatar} alt={userName} />
-                            <AvatarFallback className="text-sm">
-                                {userName?.[0] || "U"}
-                            </AvatarFallback>
+                            {avatarContent}
                         </Avatar>
                     </Button>
                 </DropdownMenuTrigger>
@@ -66,7 +103,7 @@ export function UserMenu() {
                         <div className="flex flex-col space-y-1 leading-none">
                             <p className="font-medium">{userName}</p>
                             <p className="w-[200px] truncate text-sm text-muted-foreground">
-                                {session.user?.email}
+                                {profileUser?.email || session.user?.email}
                             </p>
                         </div>
                     </div>
@@ -104,6 +141,22 @@ export function UserMenu() {
                 className="w-48"
                 sideOffset={8}
             >
+                
+                <DropdownMenuItem
+                    onClick={() => { redirect("/login") }}
+                    className="flex items-center"
+                >
+                    <PhoneIcon className="mr-2 h-4 w-4" />
+                    <span>手机号登录</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                    onClick={() => { redirect("/login") }}
+                    className="flex items-center"
+                >
+                    <MailIcon className="mr-2 h-4 w-4" />
+                    <span>邮箱登录</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                     onClick={() => signIn("github")}
                     className="flex items-center"
@@ -134,14 +187,6 @@ export function UserMenu() {
                         />
                     </svg>
                     <span>Google 登录</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                    onClick={() => { redirect("/login") }}
-                    className="flex items-center"
-                >
-                    <MailIcon className="mr-2 h-4 w-4" />
-                    <span>邮箱验证码登录</span>
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>

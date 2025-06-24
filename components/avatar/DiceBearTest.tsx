@@ -13,13 +13,11 @@ export default function DiceBearTest() {
       // 检查可用的样式
       const styleKeys = Object.keys(styles);
       setAvailableStyles(styleKeys);
-      console.log("Available DiceBear styles:", styleKeys);
 
       // 尝试生成一个测试头像
       if (styleKeys.length > 0) {
         const firstStyle = styleKeys[0];
         const styleModule = (styles as any)[firstStyle];
-        console.log("Testing style:", firstStyle, styleModule);
         
         if (styleModule) {
           const avatar = createAvatar(styleModule, { seed: "test" });

@@ -4,9 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Image, Palette, Settings, Sparkles, ArrowLeft } from "lucide-react";
+import { Palette, Settings, Sparkles, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from 'next/image';
 
 /**
  * AI 生图页面
@@ -142,7 +143,7 @@ export default function ImagePage() {
             </CardHeader>
             <CardContent className="flex items-center justify-center h-96">
               <div className="text-center text-gray-400">
-                <Image className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <Image src="/placeholder.png" alt="占位图标" width={64} height={64} className="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <p>输入描述并点击生成按钮</p>
                 <p className="text-sm mt-2">AI 将为您创作独特的图片</p>
               </div>

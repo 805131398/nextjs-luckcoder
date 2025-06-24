@@ -11,6 +11,7 @@ import DiceBearTest from "@/components/avatar/DiceBearTest";
 export default function ProfilePage() {
   const { data: session, update } = useSession();
   const [provider, setProvider] = useState<string | null>(null);
+  const [profileUser, setProfileUser] = useState<any>(null);
   const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
@@ -19,6 +20,7 @@ export default function ProfilePage() {
       if (res.ok) {
         const data = await res.json();
         setProvider(data.provider);
+        setProfileUser(data);
       }
     }
     fetchProfile();
@@ -34,6 +36,11 @@ export default function ProfilePage() {
     });
     if (res.ok && typeof update === "function") {
       await update();
+      // 重新拉取 profile，确保昵称和头像同步
+      const profileRes = await fetch("/api/profile");
+      if (profileRes.ok) {
+        setProfileUser(await profileRes.json());
+      }
     }
   };
 
@@ -43,6 +50,11 @@ export default function ProfilePage() {
       const res = await fetch("/api/profile/sync", { method: "POST" });
       if (res.ok && typeof update === "function") {
         await update();
+        // 重新拉取 profile，确保同步后头像刷新
+        const profileRes = await fetch("/api/profile");
+        if (profileRes.ok) {
+          setProfileUser(await profileRes.json());
+        }
       }
     } finally {
       setSyncing(false);
@@ -53,27 +65,29 @@ export default function ProfilePage() {
     // 更新会话信息以反映新头像
     if (typeof update === "function") {
       await update();
+      // 重新拉取 profile，确保头像同步
+      const profileRes = await fetch("/api/profile");
+      if (profileRes.ok) {
+        setProfileUser(await profileRes.json());
+      }
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto px-2 py-4 sm:px-4 md:px-8">
-      {/* 临时调试组件 */}
-      <DiceBearTest />
-      
       <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 mb-8">
         <div className="flex-shrink-0">
-          <ProfileAvatar user={session.user} onAvatarUpdate={handleAvatarUpdate} />
+          <ProfileAvatar user={profileUser || session.user} onAvatarUpdate={handleAvatarUpdate} />
         </div>
         <div className="flex-1 w-full space-y-2">
           <div className="flex items-center gap-2">
-            {session.user?.email && <span className="text-lg sm:text-2xl font-bold break-all">{session.user?.email}</span>}
-            {session.user?.phone && <span className="text-lg sm:text-2xl font-bold break-all">{session.user?.phone}</span>  }
+            {profileUser?.email && <span className="text-lg sm:text-2xl font-bold break-all">{profileUser.email}</span>}
+            {profileUser?.phone && <span className="text-lg sm:text-2xl font-bold break-all">{profileUser.phone}</span>}
             <ProfileProviderBadge provider={provider} />
           </div>
           <div className="flex items-center gap-2">
-          <ProfileNickname user={session.user} onSave={handleSave} />
-          {provider === "github" && <ProfileSyncButton syncing={syncing} onSync={handleSync} />}
+            <ProfileNickname user={profileUser || session.user} onSave={handleSave} />
+            {provider === "github" && <ProfileSyncButton syncing={syncing} onSync={handleSync} />}
           </div>
         </div>
       </div>

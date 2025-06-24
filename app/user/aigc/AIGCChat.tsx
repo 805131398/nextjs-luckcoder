@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 
 function genId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
@@ -207,10 +208,11 @@ export default function AIGCChat({ conversationId, onConversationUpdated }: AIGC
             <div className={`rounded-lg px-4 py-2 max-w-[80%] text-sm shadow ${msg.role === "user" ? "bg-primary text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"}`}>
               {msg.content}
               {msg.imageUrl && (
-                <img 
+                <Image 
                   src={msg.imageUrl} 
                   alt="AI生成" 
-                  className="mt-2 rounded-lg border w-full max-w-[512px]"
+                  fill
+                  className="mt-2 rounded-lg border w-full max-w-[512px] object-contain"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.src = "/placeholder.png";

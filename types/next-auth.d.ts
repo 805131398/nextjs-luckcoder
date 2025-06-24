@@ -11,6 +11,9 @@ declare module "next-auth" {
   interface User {
     id: string
     phone?: string
+    avatarType?: "system" | "custom"
+    avatarStyle?: string
+    avatarSeed?: string
   }
 }
 
@@ -18,5 +21,8 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string
     phone?: string
+    avatarType?: string
+    avatarStyle?: string
+    avatarSeed?: string
   }
 } 

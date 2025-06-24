@@ -7,7 +7,8 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export const { auth, handlers, signIn, signOut } = NextAuth({
+// 1. 先定义并导出 authOptions
+export const authOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt",
@@ -25,7 +26,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         console.log("开始验证邮箱凭据:", credentials);
-        
+
         if (!credentials?.email || !credentials?.code) {
           console.log("邮箱凭据不完整");
           return null;
@@ -76,7 +77,16 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
               },
             });
             console.log("新邮箱用户已创建:", user);
-            
+
+            // 设置默认头像风格和种子
+            await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                avatarType: "system",
+                avatarStyle: "lorelei",
+                avatarSeed: user.id,
+              },
+            });
             // 为新用户创建账户记录
             await prisma.account.create({
               data: {
@@ -136,7 +146,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         console.log("开始验证手机号凭据:", credentials);
-        
+
         if (!credentials?.phone || !credentials?.code) {
           console.log("手机号凭据不完整");
           return null;
@@ -187,7 +197,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
               },
             });
             console.log("新手机号用户已创建:", user);
-            
+
             // 为新用户创建账户记录
             await prisma.account.create({
               data: {
@@ -240,12 +250,11 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async session({ session, token }) {
-      
       if (token?.email) {
         const dbUser = await prisma.user.findUnique({
           where: { email: token.email as string },
         });
-        
+
         if (dbUser) {
           session.user = {
             ...session.user,
@@ -254,13 +263,16 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             phone: dbUser.phone || "",
             name: dbUser.name || "",
             image: dbUser.image || "",
+            avatarType: dbUser.avatarType || "",
+            avatarStyle: dbUser.avatarStyle || "",
+            avatarSeed: dbUser.avatarSeed || "",
           };
         }
       } else if (token?.phone) {
         const dbUser = await prisma.user.findUnique({
           where: { phone: token.phone as string },
         });
-        
+
         if (dbUser) {
           session.user = {
             ...session.user,
@@ -269,14 +281,16 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             phone: dbUser.phone || "",
             name: dbUser.name || "",
             image: dbUser.image || "",
+            avatarType: dbUser.avatarType || "",
+            avatarStyle: dbUser.avatarStyle || "",
+            avatarSeed: dbUser.avatarSeed || "",
           };
         }
       }
-      
       return session;
     },
-    async jwt({ token, user }) {
-      
+    async jwt({ token, user }: { token: { id: string, email: string, phone: string, name: string, image: string }, user: { id: string, email: string, phone: string, name: string, image: string } }) {
+
       if (user) {
         token.id = user.id;
         token.email = user.email || "";
@@ -291,4 +305,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     signIn: "/login",
   },
   debug: true,
-}); 
+};
+
+// 2. 用 NextAuth(authOptions) 初始化
+export const { auth, handlers, signIn, signOut } = NextAuth(authOptions); 

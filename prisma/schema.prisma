@@ -16,6 +16,9 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
+  avatarType   String? // 头像类型: system/custom，当前只用 system
+  avatarStyle  String? // DiceBear 风格名，如 'lorelei'
+  avatarSeed   String? // DiceBear 随机种子，如用户ID、邮箱等
 }
 
 model Account {
