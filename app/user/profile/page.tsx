@@ -8,7 +8,6 @@ import { ProfileProviderBadge } from "./ProfileProviderBadge";
 import { ProfileAvatar } from "./ProfileAvatar";
 import { ProfileSyncButton } from "./ProfileSyncButton";
 import { ProfileNickname } from "./ProfileNickname";
-import DiceBearTest from "@/components/avatar/DiceBearTest";
 
 export default function ProfilePage() {
   const { data: session, update } = useSession();
