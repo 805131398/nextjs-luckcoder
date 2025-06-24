@@ -2,17 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 
-
 export async function POST(req: NextRequest) {
     const session = await auth();
     console.log(session);
-    if (!session?.user?.email) {
+    
+    // 支持邮箱或手机号登录
+    if (!session?.user?.email && !session?.user?.phone) {
         return NextResponse.json({ error: "未登录" }, { status: 401 });
     }
 
     const { nickname } = await req.json();
+    
+    // 根据登录方式更新用户信息
+    const whereClause = session.user.email 
+        ? { email: session.user.email }
+        : { phone: session.user.phone };
+    
     await prisma.user.update({
-        where: { email: session.user.email },
+        where: whereClause,
         data: { name: nickname }
     });
     return NextResponse.json({ success: true });
@@ -20,16 +27,30 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
     const session = await auth();
-    if (!session?.user?.email) {
+    
+    // 支持邮箱或手机号登录
+    if (!session?.user?.email && !session?.user?.phone) {
         return NextResponse.json({ error: "未登录" }, { status: 401 });
     }
+    
+    // 根据登录方式查询用户信息
+    const whereClause = session.user.email 
+        ? { email: session.user.email }
+        : { phone: session.user.phone };
+    
     const user = await prisma.user.findUnique({
-        where: { email: session.user.email },
-        select: { name: true, email: true, image: true, id: true }
+        where: whereClause,
+        select: { name: true, email: true, phone: true, image: true, id: true }
     });
+    
+    // 查询账户信息
     const account = await prisma.account.findFirst({
-        where: { user: { email: session.user.email } },
+        where: { userId: user?.id },
         select: { provider: true }
     });
-    return NextResponse.json({ ...user, provider: account?.provider || null });
+    
+    return NextResponse.json({ 
+        ...user, 
+        provider: account?.provider || null 
+    });
 } 

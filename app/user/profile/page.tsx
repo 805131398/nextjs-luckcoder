@@ -6,6 +6,7 @@ import { ProfileProviderBadge } from "./ProfileProviderBadge";
 import { ProfileAvatar } from "./ProfileAvatar";
 import { ProfileSyncButton } from "./ProfileSyncButton";
 import { ProfileNickname } from "./ProfileNickname";
+import DiceBearTest from "@/components/avatar/DiceBearTest";
 
 export default function ProfilePage() {
   const { data: session, update } = useSession();
@@ -48,15 +49,26 @@ export default function ProfilePage() {
     }
   };
 
+  const handleAvatarUpdate = async () => {
+    // 更新会话信息以反映新头像
+    if (typeof update === "function") {
+      await update();
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto px-2 py-4 sm:px-4 md:px-8">
+      {/* 临时调试组件 */}
+      <DiceBearTest />
+      
       <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 mb-8">
         <div className="flex-shrink-0">
-          <ProfileAvatar user={session.user} />
+          <ProfileAvatar user={session.user} onAvatarUpdate={handleAvatarUpdate} />
         </div>
         <div className="flex-1 w-full space-y-2">
           <div className="flex items-center gap-2">
-            <span className="text-lg sm:text-2xl font-bold break-all">{session.user?.email}</span>
+            {session.user?.email && <span className="text-lg sm:text-2xl font-bold break-all">{session.user?.email}</span>}
+            {session.user?.phone && <span className="text-lg sm:text-2xl font-bold break-all">{session.user?.phone}</span>  }
             <ProfileProviderBadge provider={provider} />
           </div>
           <div className="flex items-center gap-2">

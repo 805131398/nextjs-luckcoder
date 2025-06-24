@@ -1,0 +1,2 @@
+# 此文件确保avatars目录被包含在git中
+# 实际的头像文件应该被.gitignore忽略 

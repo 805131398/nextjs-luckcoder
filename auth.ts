@@ -15,6 +15,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   providers: [
     GitHub,
     Google,
+    // 邮箱验证码登录
     Credentials({
       id: "email",
       name: "email",
@@ -23,10 +24,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         code: { label: "验证码", type: "text" },
       },
       async authorize(credentials) {
-        console.log("开始验证凭据:", credentials);
+        console.log("开始验证邮箱凭据:", credentials);
         
         if (!credentials?.email || !credentials?.code) {
-          console.log("凭据不完整");
+          console.log("邮箱凭据不完整");
           return null;
         }
 
@@ -42,10 +43,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             },
           });
 
-          console.log("验证码查询结果:", verificationToken);
+          console.log("邮箱验证码查询结果:", verificationToken);
 
           if (!verificationToken) {
-            console.log("验证码不存在或已过期");
+            console.log("邮箱验证码不存在或已过期");
             return null;
           }
 
@@ -57,14 +58,14 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             },
           });
 
-          console.log("验证码已删除");
+          console.log("邮箱验证码已删除");
 
           // 查找或创建用户
           let user = await prisma.user.findUnique({
             where: { email: credentials.email as string },
           });
 
-          console.log("用户查询结果:", user);
+          console.log("邮箱用户查询结果:", user);
 
           if (!user) {
             // 创建新用户
@@ -74,7 +75,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
                 emailVerified: new Date(),
               },
             });
-            console.log("新用户已创建:", user);
+            console.log("新邮箱用户已创建:", user);
             
             // 为新用户创建账户记录
             await prisma.account.create({
@@ -112,14 +113,126 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           const result = {
             id: user.id,
             email: user.email || "",
+            phone: user.phone || "",
             name: user.name || "",
             image: user.image || "",
           };
 
-          console.log("返回用户信息:", result);
+          console.log("返回邮箱用户信息:", result);
           return result;
         } catch (error) {
           console.error("邮箱验证码登录失败:", error);
+          return null;
+        }
+      },
+    }),
+    // 手机号验证码登录
+    Credentials({
+      id: "phone_code",
+      name: "phone_code",
+      credentials: {
+        phone: { label: "手机号", type: "tel" },
+        code: { label: "验证码", type: "text" },
+      },
+      async authorize(credentials) {
+        console.log("开始验证手机号凭据:", credentials);
+        
+        if (!credentials?.phone || !credentials?.code) {
+          console.log("手机号凭据不完整");
+          return null;
+        }
+
+        try {
+          // 查找验证码
+          const verificationToken = await prisma.verificationToken.findFirst({
+            where: {
+              identifier: credentials.phone,
+              token: credentials.code,
+              expires: {
+                gt: new Date(),
+              },
+            },
+          });
+
+          console.log("手机号验证码查询结果:", verificationToken);
+
+          if (!verificationToken) {
+            console.log("手机号验证码不存在或已过期");
+            return null;
+          }
+
+          // 删除已使用的验证码
+          await prisma.verificationToken.delete({
+            where: {
+              identifier: credentials.phone,
+              token: credentials.code as string,
+            },
+          });
+
+          console.log("手机号验证码已删除");
+
+          // 查找或创建用户
+          let user = await prisma.user.findUnique({
+            where: { phone: credentials.phone as string },
+          });
+
+          console.log("手机号用户查询结果:", user);
+
+          if (!user) {
+            // 创建新用户（自动注册）
+            user = await prisma.user.create({
+              data: {
+                phone: credentials.phone as string,
+                name: `用户${(credentials.phone as string).slice(-4)}`, // 默认昵称：用户+手机号后4位
+              },
+            });
+            console.log("新手机号用户已创建:", user);
+            
+            // 为新用户创建账户记录
+            await prisma.account.create({
+              data: {
+                userId: user.id,
+                type: "credentials",
+                provider: "phone_code",
+                providerAccountId: credentials.phone as string,
+              },
+            });
+            console.log("为新用户创建了手机号验证码账户记录");
+          } else {
+            // 检查用户是否已有手机号验证码的账户记录
+            const existingAccount = await prisma.account.findFirst({
+              where: {
+                userId: user.id,
+                provider: "phone_code",
+              },
+            });
+
+            // 如果没有账户记录，创建一个
+            if (!existingAccount) {
+              await prisma.account.create({
+                data: {
+                  userId: user.id,
+                  type: "credentials",
+                  provider: "phone_code",
+                  providerAccountId: credentials.phone as string,
+                },
+              });
+              console.log("为用户创建了手机号验证码账户记录");
+            }
+          }
+
+          const result = {
+            id: user.id,
+            email: user.email || "",
+            phone: user.phone || "",
+            name: user.name || "",
+            image: user.image || "",
+          };
+
+          console.log("返回手机号用户信息:", result);
+          return result;
+        } catch (error) {
+          console.error("手机号验证码登录失败:", error);
           return null;
         }
       },
@@ -133,12 +246,27 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           where: { email: token.email as string },
         });
         
+        if (dbUser) {
+          session.user = {
+            ...session.user,
+            id: dbUser.id,
+            email: dbUser.email || "",
+            phone: dbUser.phone || "",
+            name: dbUser.name || "",
+            image: dbUser.image || "",
+          };
+        }
+      } else if (token?.phone) {
+        const dbUser = await prisma.user.findUnique({
+          where: { phone: token.phone as string },
+        });
         
         if (dbUser) {
           session.user = {
             ...session.user,
             id: dbUser.id,
             email: dbUser.email || "",
+            phone: dbUser.phone || "",
             name: dbUser.name || "",
             image: dbUser.image || "",
           };
@@ -152,6 +280,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.email = user.email || "";
+        token.phone = user.phone || "";
         token.name = user.name || "";
         token.image = user.image || "";
       }

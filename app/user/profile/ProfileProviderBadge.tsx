@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 
 export function ProfileProviderBadge({ provider }: { provider: string | null }) {
+
   return (
     <Badge>
       {provider === "github" && (
@@ -30,12 +31,20 @@ export function ProfileProviderBadge({ provider }: { provider: string | null }) 
           邮箱
         </>
       )}
+      {provider === "phone_code" && (
+        <>
+          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+          </svg>
+          手机号
+        </>
+      )}
       {!provider && (
         <>
           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
-          未知
+          未知 
         </>
       )}
     </Badge>
