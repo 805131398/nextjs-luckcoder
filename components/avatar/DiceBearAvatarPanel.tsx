@@ -27,7 +27,6 @@ const styleOptions = [
   { value: 'bigSmile', label: '大笑' },
 ];
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getAvatarSvg(style: string, seed: string) {
   const styleModule = collection[style as keyof typeof collection] as Style<Record<string, unknown>>;
   if (!styleModule) return '';

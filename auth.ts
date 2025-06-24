@@ -1,11 +1,10 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthConfig, Session } from "next-auth";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
 
 // 1. 先定义并导出 authOptions
 export const authOptions = {
@@ -249,7 +248,7 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, token }) {
+    async session({ session, token }: { session: Session, token: { email: string, phone: string } }) {
       
       if (token?.email) {
         const dbUser = await prisma.user.findUnique({
@@ -285,7 +284,7 @@ export const authOptions = {
       
       return session;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: { id: string, email: string, phone: string, name: string, image: string }, user: { id: string, email: string, phone: string, name: string, image: string } }) {
       
       if (user) {
         token.id = user.id;
@@ -304,4 +303,4 @@ export const authOptions = {
 };
 
 // 2. 用 NextAuth(authOptions) 初始化
-export const { auth, handlers, signIn, signOut } = NextAuth(authOptions); 
+export const { auth, handlers, signIn, signOut } = NextAuth(authOptions as unknown as NextAuthConfig); 

@@ -25,10 +25,10 @@ export async function POST(req: NextRequest) {
     // 例如 uploads/avatars/xxx.png
     // 你前端要传完整 key
     // 参考 https://help.aliyun.com/zh/oss/user-guide/access-control-overview
-    // @ts-ignore
     const url = oss['client'].signatureUrl(objectKey, { expires })
     return NextResponse.json({ url })
   } catch (error) {
+    console.log(error,"生成签名 URL 失败");
     return NextResponse.json({ error: '生成签名 URL 失败' }, { status: 500 })
   }
 } 
