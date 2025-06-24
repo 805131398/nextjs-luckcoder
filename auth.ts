@@ -26,7 +26,7 @@ export const authOptions = {
       },
       async authorize(credentials) {
         console.log("开始验证邮箱凭据:", credentials);
-
+        
         if (!credentials?.email || !credentials?.code) {
           console.log("邮箱凭据不完整");
           return null;
@@ -77,7 +77,7 @@ export const authOptions = {
               },
             });
             console.log("新邮箱用户已创建:", user);
-
+            
             // 设置默认头像风格和种子
             await prisma.user.update({
               where: { id: user.id },
@@ -146,7 +146,7 @@ export const authOptions = {
       },
       async authorize(credentials) {
         console.log("开始验证手机号凭据:", credentials);
-
+        
         if (!credentials?.phone || !credentials?.code) {
           console.log("手机号凭据不完整");
           return null;
@@ -197,7 +197,7 @@ export const authOptions = {
               },
             });
             console.log("新手机号用户已创建:", user);
-
+            
             // 为新用户创建账户记录
             await prisma.account.create({
               data: {
@@ -250,11 +250,12 @@ export const authOptions = {
   ],
   callbacks: {
     async session({ session, token }) {
+      
       if (token?.email) {
         const dbUser = await prisma.user.findUnique({
           where: { email: token.email as string },
         });
-
+        
         if (dbUser) {
           session.user = {
             ...session.user,
@@ -263,16 +264,13 @@ export const authOptions = {
             phone: dbUser.phone || "",
             name: dbUser.name || "",
             image: dbUser.image || "",
-            avatarType: dbUser.avatarType || "",
-            avatarStyle: dbUser.avatarStyle || "",
-            avatarSeed: dbUser.avatarSeed || "",
           };
         }
       } else if (token?.phone) {
         const dbUser = await prisma.user.findUnique({
           where: { phone: token.phone as string },
         });
-
+        
         if (dbUser) {
           session.user = {
             ...session.user,
@@ -281,16 +279,14 @@ export const authOptions = {
             phone: dbUser.phone || "",
             name: dbUser.name || "",
             image: dbUser.image || "",
-            avatarType: dbUser.avatarType || "",
-            avatarStyle: dbUser.avatarStyle || "",
-            avatarSeed: dbUser.avatarSeed || "",
           };
         }
       }
+      
       return session;
     },
-    async jwt({ token, user }: { token: { id: string, email: string, phone: string, name: string, image: string }, user: { id: string, email: string, phone: string, name: string, image: string } }) {
-
+    async jwt({ token, user }) {
+      
       if (user) {
         token.id = user.id;
         token.email = user.email || "";

@@ -33,6 +33,11 @@ export const navigationItems: NavigationItem[] = [
         title: "作品广场",
         href: "/user/squre",
         icon: FerrisWheelIcon,
+    },
+    {
+        title: "test oss",
+        href: "/test/oss",
+        icon: FerrisWheelIcon,
     }
 ];
 

@@ -2,8 +2,8 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
-import { useState } from "react";
+import { Avatar, AvatarImage } from "../ui/avatar";
+import { useEffect, useState } from "react";
 import { createAvatar } from "@dicebear/core";
 import * as styles from "@dicebear/collection";
 import DiceBearAvatarPanel from "./DiceBearAvatarPanel";
@@ -49,11 +49,19 @@ export default function AvatarDialog({ open, onOpenChange, onSave, initialData }
   const [tab, setTab] = useState<"system" | "custom">(initialData.avatarType);
   const [avatarData, setAvatarData] = useState<AvatarData>(initialData);
 
+  useEffect(() => {
+    setTab(initialData.avatarType);
+  }, [initialData]);
+
+  useEffect(() => {
+    setAvatarData(initialData);
+  }, [initialData]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>更换头像</DialogTitle>
+          <DialogTitle>更换头像 </DialogTitle>
         </DialogHeader>
         {/* 头像预览区（顶部大头像） */}
         <div className="flex justify-center mb-6">
@@ -63,9 +71,7 @@ export default function AvatarDialog({ open, onOpenChange, onSave, initialData }
             <Avatar className="w-20 h-20">
               {avatarData.avatarUrl ? (
                 <AvatarImage src={avatarData.avatarUrl} alt="头像预览" />
-              ) : (
-                <AvatarFallback>U</AvatarFallback>
-              )}
+              ) : null}
             </Avatar>
           )}
         </div>
@@ -90,7 +96,7 @@ export default function AvatarDialog({ open, onOpenChange, onSave, initialData }
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            上传图片
+            自定义头像
           </button>
         </div>
         
@@ -99,7 +105,7 @@ export default function AvatarDialog({ open, onOpenChange, onSave, initialData }
           {tab === "system" && (
             <DiceBearAvatarPanel
               value={avatarData}
-              onChange={data => setAvatarData({ ...avatarData, ...data, avatarType: "system" })}
+              onChange={data => setAvatarData({ ...avatarData, ...data, avatarType: "system", avatarUrl: initialData.avatarUrl })}
             />
           )}
           

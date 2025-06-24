@@ -1,3 +1,5 @@
+/** @format */
+
 "use client";
 
 import { useSession } from "next-auth/react";
@@ -77,17 +79,30 @@ export default function ProfilePage() {
     <div className="max-w-2xl mx-auto px-2 py-4 sm:px-4 md:px-8">
       <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 mb-8">
         <div className="flex-shrink-0">
-          <ProfileAvatar user={profileUser || session.user} onAvatarUpdate={handleAvatarUpdate} />
+          <ProfileAvatar
+            user={profileUser}
+            onAvatarUpdate={handleAvatarUpdate}
+          />
         </div>
         <div className="flex-1 w-full space-y-2">
           <div className="flex items-center gap-2">
-            {profileUser?.email && <span className="text-lg sm:text-2xl font-bold break-all">{profileUser.email}</span>}
-            {profileUser?.phone && <span className="text-lg sm:text-2xl font-bold break-all">{profileUser.phone}</span>}
+            {profileUser?.email && (
+              <span className="text-lg sm:text-2xl font-bold break-all">
+                {profileUser.email}
+              </span>
+            )}
+            {profileUser?.phone && (
+              <span className="text-lg sm:text-2xl font-bold break-all">
+                {profileUser.phone}
+              </span>
+            )}
             <ProfileProviderBadge provider={provider} />
           </div>
           <div className="flex items-center gap-2">
-            <ProfileNickname user={profileUser || session.user} onSave={handleSave} />
-            {provider === "github" && <ProfileSyncButton syncing={syncing} onSync={handleSync} />}
+            <ProfileNickname user={profileUser} onSave={handleSave} />
+            {provider === "github" && (
+              <ProfileSyncButton syncing={syncing} onSync={handleSync} />
+            )}
           </div>
         </div>
       </div>
