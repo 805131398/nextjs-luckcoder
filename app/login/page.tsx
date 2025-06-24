@@ -45,7 +45,8 @@ export default function LoginPage() {
       } else {
         setError(data.error || "发送验证码失败");
       }
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error: unknown) {
       setError("网络错误，请稍后重试");
     } finally {
       setIsSendingCode(false);
@@ -66,7 +67,7 @@ export default function LoginPage() {
     try {
       console.log("开始登录，邮箱:", email, "验证码:", code);
       
-      const result = await signIn("email-code", {
+      const result = await signIn("email", {
         email,
         code,
         redirect: false,

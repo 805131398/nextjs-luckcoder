@@ -16,8 +16,8 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     GitHub,
     Google,
     Credentials({
-      id: "email-code",
-      name: "email-code",
+      id: "email",
+      name: "email",
       credentials: {
         email: { label: "邮箱", type: "email" },
         code: { label: "验证码", type: "text" },
@@ -53,7 +53,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           await prisma.verificationToken.delete({
             where: {
               identifier: credentials.email,
-              token: credentials.code,
+              token: credentials.code as string,
             },
           });
 
@@ -61,7 +61,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 
           // 查找或创建用户
           let user = await prisma.user.findUnique({
-            where: { email: credentials.email },
+            where: { email: credentials.email as string },
           });
 
           console.log("用户查询结果:", user);
@@ -70,18 +70,50 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             // 创建新用户
             user = await prisma.user.create({
               data: {
-                email: credentials.email,
+                email: credentials.email as string,
                 emailVerified: new Date(),
               },
             });
             console.log("新用户已创建:", user);
+            
+            // 为新用户创建账户记录
+            await prisma.account.create({
+              data: {
+                userId: user.id,
+                type: "credentials",
+                provider: "email",
+                providerAccountId: credentials.email as string,
+              },
+            });
+            console.log("为新用户创建了邮箱验证码账户记录");
+          } else {
+            // 检查用户是否已有邮箱验证码的账户记录
+            const existingAccount = await prisma.account.findFirst({
+              where: {
+                userId: user.id,
+                provider: "email",
+              },
+            });
+
+            // 如果没有账户记录，创建一个
+            if (!existingAccount) {
+              await prisma.account.create({
+                data: {
+                  userId: user.id,
+                  type: "credentials",
+                  provider: "email",
+                  providerAccountId: credentials.email as string,
+                },
+              });
+              console.log("为用户创建了邮箱验证码账户记录");
+            }
           }
 
           const result = {
             id: user.id,
-            email: user.email ?? "",
-            name: user.name ?? "",
-            image: user.image ?? "",
+            email: user.email || "",
+            name: user.name || "",
+            image: user.image || "",
           };
 
           console.log("返回用户信息:", result);
@@ -95,42 +127,34 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async session({ session, token }) {
-      console.log("Session callback - session:", session);
-      console.log("Session callback - token:", token);
       
       if (token?.email) {
         const dbUser = await prisma.user.findUnique({
           where: { email: token.email as string },
         });
         
-        console.log("Session callback - dbUser:", dbUser);
         
         if (dbUser) {
           session.user = {
             ...session.user,
             id: dbUser.id,
-            email: dbUser.email,
-            name: dbUser.name,
-            image: dbUser.image,
+            email: dbUser.email || "",
+            name: dbUser.name || "",
+            image: dbUser.image || "",
           };
         }
       }
       
-      console.log("Session callback - final session:", session);
       return session;
     },
     async jwt({ token, user }) {
-      console.log("JWT callback - token:", token);
-      console.log("JWT callback - user:", user);
       
       if (user) {
         token.id = user.id;
-        token.email = user.email;
-        token.name = user.name;
-        token.image = user.image;
+        token.email = user.email || "";
+        token.name = user.name || "";
+        token.image = user.image || "";
       }
-      
-      console.log("JWT callback - final token:", token);
       return token;
     },
   },

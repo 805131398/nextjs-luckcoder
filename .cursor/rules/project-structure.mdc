@@ -1,7 +1,7 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 # Next.js 项目结构说明（基于 nextjs-luckcoder）
 
@@ -146,5 +146,45 @@ nextjs-luckcoder/
 
 ### 参考文档
 - [shadcn/ui 组件库文档](mdc:https:/ui.shadcn.com/docs/components)
+
+## 数据库说明
+
+本项目采用关系型数据库（推荐 PostgreSQL 或 MySQL），通过 Prisma 作为 ORM 工具进行数据建模与访问。数据库主要用于持久化用户信息、认证数据、业务数据等。
+
+### 主要用途
+- 用户注册、登录、第三方认证信息存储
+- 用户资料（如昵称、头像、邮箱等）管理
+- 业务相关数据（如聊天记录、内容发布等）持久化
+- 支持多租户、权限管理等扩展
+
+### 技术选型
+- **ORM 工具**：Prisma（`lib/prisma.ts`、`prisma/schema.prisma`）
+- **推荐数据库**：PostgreSQL（优先）、MySQL、SQLite（开发测试可用）
+- **数据库迁移**：通过 Prisma Migrate 管理 schema 变更
+
+### 目录结构
+- `prisma/schema.prisma`  数据库 schema 定义文件，描述所有表结构、字段、关系等。
+- `prisma/migrations/`  数据库迁移历史，记录每次 schema 变更。
+- `lib/prisma.ts`  Prisma 客户端初始化与导出，供全局调用。
+
+### 典型数据表
+- `User`：用户主表，存储基本信息
+- `Account`：第三方登录账号信息（如 GitHub、Google 等）
+- `Session`：会话信息
+- `VerificationToken`：邮箱验证码等临时令牌
+- 业务相关表（如聊天、内容等）
+
+### 使用方法
+- 所有数据库操作建议通过 Prisma Client 进行，避免直接 SQL
+- 认证相关表结构可参考 [NextAuth.js 官方文档](mdc:https:/authjs.dev/reference/adapter/prisma)
+- 业务表可根据实际需求扩展
+
+### 迁移与初始化
+- 新增/修改表结构后，运行 `npx prisma migrate dev` 生成并应用迁移
+- 可通过 `.env` 文件配置数据库连接字符串（如 `DATABASE_URL`）
+
+### 参考文档
+- [Prisma 官方文档](mdc:https:/www.prisma.io/docs)
+- [NextAuth.js Prisma Adapter](mdc:https:/authjs.dev/reference/adapter/prisma)
 
 > 本节内容为团队成员后续开发提供 UI 组件选型、用法和扩展的参考。

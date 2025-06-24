@@ -8,7 +8,9 @@ export default function UserLayout({
     return (
         <>
             <NavBar/>
-            {children}
+            <main className="pt-16">
+                {children}
+            </main>
         </>
     );
 }
