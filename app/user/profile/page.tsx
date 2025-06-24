@@ -8,11 +8,12 @@ import { ProfileProviderBadge } from "./ProfileProviderBadge";
 import { ProfileAvatar } from "./ProfileAvatar";
 import { ProfileSyncButton } from "./ProfileSyncButton";
 import { ProfileNickname } from "./ProfileNickname";
+import { User } from "next-auth";
 
 export default function ProfilePage() {
   const { data: session, update } = useSession();
   const [provider, setProvider] = useState<string | null>(null);
-  const [profileUser, setProfileUser] = useState<any>(null);
+  const [profileUser, setProfileUser] = useState<User>();
   const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
