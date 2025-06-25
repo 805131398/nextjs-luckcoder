@@ -193,6 +193,9 @@ export const authOptions = {
               data: {
                 phone: credentials.phone as string,
                 name: `用户${(credentials.phone as string).slice(-4)}`, // 默认昵称：用户+手机号后4位
+                avatarType: "system",
+                avatarStyle: "lorelei",
+                avatarSeed: credentials.phone as string,
               },
             });
             console.log("新手机号用户已创建:", user);

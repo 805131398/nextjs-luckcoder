@@ -8,36 +8,33 @@ import { Camera } from "lucide-react";
 import { createAvatar } from "@dicebear/core";
 import * as styles from "@dicebear/collection";
 import AvatarDialog, { AvatarData } from "@/components/avatar/AvatarDialog";
-import { User } from "next-auth";
+import { useProfileStore } from "@/lib/store/profile-store";
 import { Buffer } from "buffer";
 import type { Style } from "@dicebear/core";
+import type { User } from "next-auth";
 
 interface ProfileAvatarProps {
-  user: User | undefined;
   onAvatarUpdate?: () => void;
 }
 
 // 默认头像数据生成
-function getDefaultAvatarData(user: User | undefined): AvatarData {
+function getDefaultAvatarData(profile: User | null | undefined): AvatarData {
   return {
-    avatarType: user?.avatarType || "custom",
-    avatarSeed: user?.avatarSeed || user?.id || user?.email || "user",
-    avatarStyle: user?.avatarStyle || "lorelei",
-    avatarUrl: user?.image || undefined,
+    avatarType: (profile?.avatarType as "system" | "custom") || "custom",
+    avatarSeed: profile?.avatarSeed || profile?.id || profile?.email || "user",
+    avatarStyle: profile?.avatarStyle || "lorelei",
+    avatarUrl: profile?.image || undefined,
   };
 }
 
-export function ProfileAvatar({ user, onAvatarUpdate }: ProfileAvatarProps) {
+export function ProfileAvatar({ onAvatarUpdate }: ProfileAvatarProps) {
+  const { profile } = useProfileStore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  // 这里建议实际从后端获取用户头像数据
-  const [avatarData, setAvatarData] = useState<AvatarData>(
-    getDefaultAvatarData(user)
-  );
+  const [avatarData, setAvatarData] = useState<AvatarData>(getDefaultAvatarData(profile));
 
   useEffect(() => {
-    setAvatarData(getDefaultAvatarData(user));
-  }, [user]);
-
+    setAvatarData(getDefaultAvatarData(profile));
+  }, [profile]);
 
   // 头像点击弹窗
   const handleAvatarClick = () => setIsDialogOpen(true);
@@ -102,7 +99,7 @@ export function ProfileAvatar({ user, onAvatarUpdate }: ProfileAvatarProps) {
         <AvatarImage
           src={avatarData.avatarUrl}
           alt="用户头像"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover rounded-full border-2 border-blue-400"
         />
       );
     }
@@ -123,7 +120,7 @@ export function ProfileAvatar({ user, onAvatarUpdate }: ProfileAvatarProps) {
       );
     }
     // fallback
-    return <AvatarFallback>{user?.name?.[0] || "U"}</AvatarFallback>;
+    return <AvatarFallback>{profile?.name?.[0] || "U"}</AvatarFallback>;
   };
 
   return (

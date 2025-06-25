@@ -68,9 +68,9 @@ export default function AvatarDialog({ open, onOpenChange, onSave, initialData }
           {tab === "system" ? (
             <DiceBearAvatarPreview style={avatarData.avatarStyle} seed={avatarData.avatarSeed} />
           ) : (
-            <Avatar className="w-20 h-20">
+            <Avatar className="w-20 h-20 mx-auto mb-2 shadow-lg border-4 border-white bg-white">
               {avatarData.avatarUrl ? (
-                <AvatarImage src={avatarData.avatarUrl} alt="头像预览" />
+                <AvatarImage src={avatarData.avatarUrl} alt="头像预览"  />
               ) : null}
             </Avatar>
           )}
