@@ -17,10 +17,11 @@ export default function DiceBearTest() {
       // 尝试生成一个测试头像
       if (styleKeys.length > 0) {
         const firstStyle = styleKeys[0];
-        const styleModule = (styles as any)[firstStyle];
+        // 使用类型断言，但更安全的方式
+        const styleModule = (styles as Record<string, unknown>)[firstStyle];
         
-        if (styleModule) {
-          const avatar = createAvatar(styleModule, { seed: "test" });
+        if (styleModule && typeof styleModule === 'object' && styleModule !== null) {
+          const avatar = createAvatar(styleModule as any, { seed: "test" });
           const svg = avatar.toString();
           setSvgContent(svg);
           console.log("Generated SVG:", svg.substring(0, 100) + "...");

@@ -58,7 +58,6 @@ export default function ProfilePage() {
       <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 mb-8">
         <div className="flex-shrink-0">
           <ProfileAvatar
-            user={profile ?? undefined}
             onAvatarUpdate={handleAvatarUpdate}
           />
         </div>

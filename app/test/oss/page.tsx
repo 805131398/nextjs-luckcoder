@@ -9,6 +9,7 @@ import { Alert } from "@/components/ui/alert";
 import { UploadCloud, Image as ImageIcon, Link2 } from "lucide-react";
 import { uploadToOss, getOssSignedUrl } from "@/lib/oss-utils";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function OssTestPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -166,10 +167,13 @@ export default function OssTestPage() {
               <ImageIcon className="w-4 h-4 text-blue-400" />
               <span className="font-medium text-blue-700">签名图片预览</span>
             </div>
-            <img
+            <Image
               src={signedUrl}
               alt="签名图片"
+              width={300}
+              height={240}
               className="max-w-full max-h-60 rounded border shadow"
+              style={{ objectFit: 'contain' }}
             />
             <a
               href={signedUrl}

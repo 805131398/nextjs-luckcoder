@@ -78,7 +78,6 @@ export function UserMenu() {
     } else {
         avatarContent = <AvatarFallback>{userName?.[0] || "U"}</AvatarFallback>;
     }
-    console.log('avatarContent:', avatarContent);
     if (profile) {
         return (
             <DropdownMenu>
