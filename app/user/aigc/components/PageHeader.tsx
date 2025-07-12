@@ -24,7 +24,7 @@ export default function PageHeader({ title, backPath = '/user/aigc' }: PageHeade
   };
 
   return (
-    <div className="flex items-center justify-between p-4 border-b bg-white">
+    <div className="sticky top-16 z-40 flex items-center justify-between p-4 border-b bg-white/95 backdrop-blur-sm shadow-sm">
       <div className="flex items-center">
         <Button 
           variant="ghost" 
