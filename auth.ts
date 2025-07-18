@@ -5,6 +5,35 @@ import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 
+// 定义回调函数的类型
+interface SessionCallbackParams {
+  session: Session;
+  token: {
+    id?: string;
+    email?: string;
+    phone?: string;
+    name?: string;
+    image?: string;
+  };
+}
+
+interface JWTCallbackParams {
+  token: {
+    id?: string;
+    email?: string;
+    phone?: string;
+    name?: string;
+    image?: string;
+  };
+  user?: {
+    id: string;
+    email?: string;
+    phone?: string;
+    name?: string;
+    image?: string;
+  };
+}
+
 
 // 1. 先定义并导出 authOptions
 export const authOptions = {
@@ -251,7 +280,7 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, token }: { session: Session, token: { email: string, phone: string } }) {
+    async session({ session, token }: SessionCallbackParams) {
       
       if (token?.email) {
         const dbUser = await prisma.user.findUnique({
@@ -287,7 +316,7 @@ export const authOptions = {
       
       return session;
     },
-    async jwt({ token, user }: { token: { id: string, email: string, phone: string, name: string, image: string }, user: { id: string, email: string, phone: string, name: string, image: string } }) {
+    async jwt({ token, user }: JWTCallbackParams) {
       
       if (user) {
         token.id = user.id;

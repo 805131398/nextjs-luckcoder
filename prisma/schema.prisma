@@ -8,33 +8,34 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  name          String?
-  email         String?  @unique
-  phone         String?  @unique   // 新增手机号字段
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  avatarType   String? // 头像类型: system/custom，当前只用 system
-  avatarStyle  String? // DiceBear 风格名，如 'lorelei'
-  avatarSeed   String? // DiceBear 随机种子，如用户ID、邮箱等
+  id             String           @id @default(cuid())
+  name           String?
+  email          String?          @unique
+  emailVerified  DateTime?
+  image          String?
+  phone          String?          @unique
+  avatarSeed     String?
+  avatarStyle    String?
+  avatarType     String?
+  accounts       Account[]
+  NoteRepository NoteRepository[]
+  sessions       Session[]
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?
-  access_token       String?
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?
-  session_state      String?
-  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -53,4 +54,38 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Note {
+  id             String         @id
+  repositoryId   String
+  title          String
+  content        String
+  path           String
+  tags           String[]
+  category       String?
+  isPublished    Boolean        @default(true)
+  lastSynced     DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime
+  NoteRepository NoteRepository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, path])
+}
+
+model NoteRepository {
+  id          String   @id
+  userId      String
+  name        String
+  description String?
+  repoUrl     String
+  branch      String   @default("main")
+  accessToken String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  Note        Note[]
+  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, repoUrl])
 }
