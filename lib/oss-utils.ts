@@ -62,7 +62,12 @@ export async function uploadToOss(
     }
     xhr.send(formData)
   })
-  return { url: `${policy.host}/${key}`, objectKey: key }
+  
+  // 将 http 协议替换为 https 协议
+  const originalUrl = `${policy.host}/${key}`
+  const httpsUrl = originalUrl.replace(/^http:/, 'https:')
+  
+  return { url: httpsUrl, objectKey: key }
 }
 
 /**
@@ -79,5 +84,19 @@ export async function getOssSignedUrl(objectKey: string, expires = 120): Promise
   })
   const data: { url?: string; error?: string } = await res.json()
   if (!res.ok) throw new Error(data.error || "获取签名 URL 失败")
-  return data.url as string
+  
+  // 将 http 协议替换为 https 协议
+  const originalUrl = data.url as string
+  const httpsUrl = originalUrl.replace(/^http:/, 'https:')
+  
+  return httpsUrl
+}
+
+/**
+ * 测试函数：验证 URL 协议转换
+ * @param url 原始 URL
+ * @returns 转换后的 HTTPS URL
+ */
+export function ensureHttps(url: string): string {
+  return url.replace(/^http:/, 'https:')
 } 

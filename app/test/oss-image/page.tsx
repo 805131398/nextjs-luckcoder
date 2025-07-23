@@ -132,6 +132,7 @@ export default function OssImageTestPage() {
               <p><strong>是否为 OSS:</strong> {isOssImage ? "是" : "否"}</p>
               <p><strong>加载状态:</strong> {isLoading ? "加载中" : "已完成"}</p>
               <p><strong>处理后的 URL:</strong> {imageUrl || "null"}</p>
+              <p><strong>是否为 HTTPS:</strong> {imageUrl ? (imageUrl.startsWith('https:') ? "是" : "否") : "N/A"}</p>
               {error && <p><strong>错误信息:</strong> {error}</p>}
             </div>
           </div>
