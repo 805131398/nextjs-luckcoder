@@ -2,191 +2,175 @@
 
 "use client";
 
-import React, { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Alert } from "@/components/ui/alert";
-import { UploadCloud, Image as ImageIcon, Link2 } from "lucide-react";
-import { uploadToOss, getOssSignedUrl } from "@/lib/oss-utils";
-import Link from "next/link";
-import Image from "next/image";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle, CheckCircle, Info } from "lucide-react";
 
 export default function OssTestPage() {
-  const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [signedUrl, setSignedUrl] = useState<string | null>(null);
-  const [signing, setSigning] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [objectKey, setObjectKey] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [testType, setTestType] = useState<"policy" | "upload" | "access">("policy");
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFile(e.target.files?.[0] || null);
-    setResult(null);
-    setError(null);
-    setProgress(0);
-    setSignedUrl(null);
-    setObjectKey(null);
-  };
+  const testOssConnection = async () => {
+    setIsLoading(true);
+    setTestResult("");
 
-  const handleUpload = async () => {
-    if (!file) return;
-    setUploading(true);
-    setResult(null);
-    setError(null);
-    setProgress(0);
-    setSignedUrl(null);
-    setObjectKey(null);
     try {
-      const { url, objectKey } = await uploadToOss(
-        file,
-        "uploads/avatars/",
-        10,
-        setProgress
-      );
-      setResult(url);
-      console.log(url, objectKey, "上传成功");
-      setObjectKey(objectKey);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "上传失败");
+      const response = await fetch("/api/oss/policy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dir: "uploads/avatars/",
+          maxSizeMB: 10,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setTestResult(`✅ OSS 配置正确！\n\n返回数据：\n${JSON.stringify(result, null, 2)}`);
+      } else {
+        setTestResult(`❌ OSS 配置错误：${result.error}`);
+      }
+    } catch (error) {
+      setTestResult(`❌ 测试失败：${error instanceof Error ? error.message : "未知错误"}`);
     } finally {
-      setUploading(false);
+      setIsLoading(false);
     }
   };
 
-  const handleGetSignUrl = async () => {
-    if (!objectKey) return;
-    setSigning(true);
-    setSignedUrl(null);
-    setError(null);
+  const testFileAccess = async () => {
+    setIsLoading(true);
+    setTestResult("");
+
     try {
-      const url = await getOssSignedUrl(objectKey, 120);
-      setSignedUrl(url);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "获取签名 URL 失败");
+      // 创建一个测试文件
+      const testFile = new File(['test content'], 'test.txt', { type: 'text/plain' });
+      
+      const response = await fetch("/api/oss/policy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dir: "uploads/test/",
+          maxSizeMB: 1,
+        }),
+      });
+
+      const policy = await response.json();
+      
+      if (!response.ok) {
+        setTestResult(`❌ 获取签名失败：${policy.error}`);
+        return;
+      }
+
+      // 尝试上传测试文件
+      const formData = new FormData();
+      formData.append("key", "uploads/test/test.txt");
+      formData.append("OSSAccessKeyId", policy.accessKeyId);
+      formData.append("policy", policy.policy);
+      formData.append("Signature", policy.signature);
+      formData.append("success_action_status", "200");
+      formData.append("file", testFile);
+
+      const uploadResponse = await fetch(policy.host, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (uploadResponse.ok) {
+        setTestResult(`✅ 文件上传成功！\n\n上传 URL: ${policy.host}/uploads/test/test.txt\n\n现在测试文件访问...`);
+        
+        // 测试文件访问
+        setTimeout(async () => {
+          try {
+            const accessResponse = await fetch(`${policy.host}/uploads/test/test.txt`);
+            if (accessResponse.ok) {
+              setTestResult(prev => prev + `\n\n✅ 文件访问成功！存储桶权限正常。`);
+            } else {
+              setTestResult(prev => prev + `\n\n❌ 文件访问失败！状态码: ${accessResponse.status}\n\n这表示存储桶是私有的，需要使用签名 URL 访问。`);
+            }
+          } catch (error) {
+            setTestResult(prev => prev + `\n\n❌ 文件访问测试失败：${error instanceof Error ? error.message : "未知错误"}`);
+          }
+        }, 2000);
+      } else {
+        setTestResult(`❌ 文件上传失败！状态码: ${uploadResponse.status}`);
+      }
+    } catch (error) {
+      setTestResult(`❌ 测试失败：${error instanceof Error ? error.message : "未知错误"}`);
     } finally {
-      setSigning(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* 左侧主内容 */}
-      <div className="flex-1 flex items-center justify-center">
-        <Card className="w-full max-w-lg p-8 shadow-xl border-blue-100">
-          <div className="flex items-center gap-2 mb-6">
-            <UploadCloud className="w-7 h-7 text-blue-500" />
-            <h1 className="text-2xl font-bold text-blue-700">
-              OSS 直传测试（私有读签名 URL）
-            </h1>
-          </div>
-          <div className="mb-4 flex flex-col gap-2">
-            <label className="font-medium text-gray-700">
-              选择图片文件上传到 OSS：
-            </label>
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="block border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
-            />
-          </div>
-          <div className="flex gap-3 mb-4">
-            <Button
-              onClick={handleUpload}
-              disabled={!file || uploading}
-              className="flex-1"
+    <div className="container mx-auto py-8">
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle>阿里云 OSS 配置测试</CardTitle>
+          <CardDescription>
+            测试 OSS 环境变量配置、签名生成和文件访问权限
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Button 
+              disabled={isLoading}
+              variant={testType === "policy" ? "default" : "outline"}
+              onClick={() => {
+                setTestType("policy");
+                testOssConnection();
+              }}
             >
-              <UploadCloud className="w-4 h-4 mr-1" />
-              {uploading ? `上传中...${progress}%` : "直传到 OSS"}
+              测试签名配置
             </Button>
-            {objectKey && (
-              <Button
-                variant="secondary"
-                className="flex-1"
-                onClick={handleGetSignUrl}
-                disabled={signing}
-              >
-                <Link2 className="w-4 h-4 mr-1" />
-                {signing ? "获取签名中..." : "获取签名URL并预览"}
-              </Button>
-            )}
-            <Button
-              variant="secondary"
-              className="flex-1"
-              onClick={handleGetSignUrl}
-              disabled={signing}
+            <Button 
+              disabled={isLoading}
+              variant={testType === "access" ? "default" : "outline"}
+              onClick={() => {
+                setTestType("access");
+                testFileAccess();
+              }}
             >
-              <Link href="/"> 返回首页</Link>
+              测试文件访问
             </Button>
           </div>
-          {progress > 0 && uploading && (
-            <div className="mb-4 text-sm text-blue-500">进度：{progress}%</div>
-          )}
-          <div className="flex flex-col gap-4 mb-4">
-            {/* 上传成功信息 */}
-            {result && (
-              <Alert className="flex-1 border-green-200 bg-green-50 h-fit">
-                <div className="flex items-start gap-2">
-                  <ImageIcon className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1 min-w-100">
-                    <div className="text-green-700 font-medium">上传成功！</div>
-                    <a
-                      href={result}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-green-700 underline break-words whitespace-pre-wrap max-w-xs block"
-                      style={{ wordBreak: "break-all" }}
-                    >
-                      {result}
-                    </a>
-                  </div>
-                </div>
-              </Alert>
-            )}
-          </div>
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <span className="font-medium">{error}</span>
-            </Alert>
-          )}
-          <div className="text-xs text-gray-400 mt-6 border-t pt-3">
-            本页面仅用于 OSS 直传与签名 URL 测试，Bucket 权限为私有读，签名 URL
-            有效期 2 分钟。
-          </div>
-        </Card>
-      </div>
-      {/* 右侧图片预览区域 */}
-      {signedUrl && (
-        <div className="w-full md:w-[420px] flex items-center justify-center bg-white/80 border-l border-blue-100 shadow-lg p-6 md:fixed md:right-0 md:top-0 md:h-full z-20">
-          <div className="flex flex-col items-center justify-center w-full max-w-xs">
-            <div className="flex items-center gap-2 mb-2">
-              <ImageIcon className="w-4 h-4 text-blue-400" />
-              <span className="font-medium text-blue-700">签名图片预览</span>
+
+          {testResult && (
+            <div className="mt-4">
+              <h3 className="font-semibold mb-2">测试结果：</h3>
+              <pre className="bg-gray-100 p-4 rounded-lg text-sm overflow-auto max-h-96">
+                {testResult}
+              </pre>
             </div>
-            <Image
-              src={signedUrl}
-              alt="签名图片"
-              width={300}
-              height={240}
-              className="max-w-full max-h-60 rounded border shadow"
-              style={{ objectFit: 'contain' }}
-            />
-            <a
-              href={signedUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs break-words mt-2 text-blue-600 underline max-w-xs block"
-              style={{ wordBreak: "break-all" }}
-            >
-              {signedUrl}
-            </a>
+          )}
+
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              <strong>AccessDenied 错误解决方案：</strong>
+              <ul className="mt-2 space-y-1 text-sm">
+                <li>• <strong>方案一：</strong>将存储桶权限设置为"公共读"（推荐用于头像）</li>
+                <li>• <strong>方案二：</strong>使用签名 URL 访问私有文件</li>
+                <li>• <strong>方案三：</strong>检查 RAM 用户权限配置</li>
+              </ul>
+            </AlertDescription>
+          </Alert>
+
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <h4 className="font-semibold text-blue-900 mb-2">配置检查清单：</h4>
+            <ul className="text-sm text-blue-800 space-y-1">
+              <li>• 检查 .env.local 文件中的 OSS 环境变量</li>
+              <li>• 确认 OSS_REGION、OSS_BUCKET、OSS_ACCESS_KEY_ID、OSS_ACCESS_KEY_SECRET 已设置</li>
+              <li>• 验证 OSS_HOST 格式正确</li>
+              <li>• 确认 AccessKey 有足够的权限</li>
+              <li>• 检查存储桶权限设置（公共读/私有）</li>
+            </ul>
           </div>
-        </div>
-      )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

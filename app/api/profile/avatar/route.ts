@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
   try {
     console.log(avatarType === "system", "avatarType === system");
     console.log(avatarType === "custom", "avatarType === custom");
+    
     if (avatarType === "system") {
       console.log(avatarUrl, "保存系统头像");
       await prisma.user.update({
@@ -33,14 +34,21 @@ export async function POST(req: NextRequest) {
       });
     } else if (avatarType === "custom") {
       console.log(avatarUrl, "保存自定义头像");
+      
+      // 验证 URL 格式
+      if (!avatarUrl || !avatarUrl.startsWith('http')) {
+        return NextResponse.json({ error: "无效的头像 URL" }, { status: 400 });
+      }
+      
       await prisma.user.update({
         where: whereClause,
         data: {
           avatarType,
-          image: avatarUrl,
+          image: avatarUrl, // 保存 OSS URL
         },
       });
     }
+    
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error(error);

@@ -16,6 +16,7 @@ export interface AvatarData {
   avatarSeed: string;
   avatarStyle: string;
   avatarUrl?: string;
+  fileData?: string; // 用于存储 base64 文件数据
 }
 
 interface AvatarDialogProps {

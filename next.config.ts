@@ -9,6 +9,18 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'luckcoder.oss-cn-beijing.aliyuncs.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'luckcoder.oss-cn-beijing.aliyuncs.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };

@@ -10,6 +10,7 @@ import * as styles from "@dicebear/collection";
 import AvatarDialog, { AvatarData } from "@/components/avatar/AvatarDialog";
 import { useProfileStore } from "@/lib/store/profile-store";
 import { Buffer } from "buffer";
+import { OssAvatar } from "@/components/ui/oss-image";
 import type { Style } from "@dicebear/core";
 import type { User } from "next-auth";
 
@@ -58,13 +59,13 @@ export function ProfileAvatar({ onAvatarUpdate }: ProfileAvatarProps) {
         }),
       });
     } else if (data.avatarType === "custom") {
-      // 保存自定义头像（图片）
+      // 保存自定义头像（图片 URL）
       await fetch("/api/profile/avatar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           avatarType: "custom",
-          avatarUrl: data.avatarUrl, // 这里是图片的 URL
+          avatarUrl: data.avatarUrl, // 这里已经是 OSS URL
         }),
       });
     }
@@ -96,15 +97,16 @@ export function ProfileAvatar({ onAvatarUpdate }: ProfileAvatarProps) {
     // 优先显示自定义头像
     if (avatarData.avatarType === "custom" && avatarData.avatarUrl) {
       return (
-        <AvatarImage
+        <OssAvatar
           src={avatarData.avatarUrl}
           alt="用户头像"
-          className="w-full h-full object-cover rounded-full border-2 border-blue-400"
+          size={80}
+          className="w-full h-full border-2 border-blue-400"
         />
       );
     }
+    
     // 其次显示系统头像
-
     if (avatarData.avatarType === "system" && systemAvatarSvg) {
       const svgBase64 =
         typeof window === "undefined"
@@ -119,6 +121,7 @@ export function ProfileAvatar({ onAvatarUpdate }: ProfileAvatarProps) {
         />
       );
     }
+    
     // fallback
     return <AvatarFallback>{profile?.name?.[0] || "U"}</AvatarFallback>;
   };

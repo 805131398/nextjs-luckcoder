@@ -4,6 +4,7 @@ import Cropper from "react-easy-crop";
 import { Button } from "../ui/button";
 import { Upload, RotateCcw, RotateCw } from "lucide-react";
 import { AvatarData } from "./AvatarDialog";
+import { uploadToOss, getOssSignedUrl } from "@/lib/oss-utils";
 
 interface UploadAvatarPanelProps {
   value: AvatarData;
@@ -16,6 +17,8 @@ export default function UploadAvatarPanel({ value, onChange }: UploadAvatarPanel
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // 处理图片选择
@@ -49,10 +52,61 @@ export default function UploadAvatarPanel({ value, onChange }: UploadAvatarPanel
     if (image) {
       try {
         const croppedImage = await getCroppedImg(image, croppedAreaPixels, rotation);
-        onChange({ avatarUrl: croppedImage });
+        onChange({ 
+          avatarUrl: croppedImage,
+          fileData: croppedImage // 保留 fileData 用于预览
+        });
       } catch (error) {
         console.error('裁剪图片失败:', error);
       }
+    }
+  };
+
+  // 上传到 OSS
+  const handleUploadToOss = async () => {
+    if (!image || !croppedAreaPixels) {
+      alert('请先选择并裁剪图片');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    try {
+      // 将 base64 转换为 File 对象
+      const croppedImage = await getCroppedImg(image, croppedAreaPixels, rotation);
+      const file = await base64ToFile(croppedImage, 'avatar.jpg');
+
+      // 使用 oss-utils 上传到 OSS
+      const result = await uploadToOss(
+        file,
+        "uploads/avatars/",
+        5, // 最大 5MB
+        (progress) => setUploadProgress(progress)
+      );
+
+      // 获取签名 URL 用于显示（如果存储桶是私有的）
+      let displayUrl = result.url;
+      try {
+        const signedUrl = await getOssSignedUrl(result.objectKey, 3600); // 1小时有效期
+        displayUrl = signedUrl;
+      } catch (error) {
+        console.warn('获取签名 URL 失败，使用原始 URL:', error);
+      }
+
+      // 更新头像 URL 为 OSS URL
+      onChange({ 
+        avatarUrl: displayUrl,
+        fileData: undefined // 清除 fileData，因为已经上传到 OSS
+      });
+
+      console.log('头像上传成功:', displayUrl);
+    } catch (error) {
+      console.error('上传失败:', error);
+      alert('上传失败: ' + (error instanceof Error ? error.message : '未知错误'));
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -120,6 +174,15 @@ export default function UploadAvatarPanel({ value, onChange }: UploadAvatarPanel
               右旋转
             </Button>
           </div>
+
+          {/* 上传按钮 */}
+          <Button
+            onClick={handleUploadToOss}
+            disabled={isUploading}
+            className="w-full mt-3"
+          >
+            {isUploading ? `上传中... ${uploadProgress}%` : '上传到 OSS'}
+          </Button>
         </div>
       )}
     </div>
@@ -171,4 +234,11 @@ async function getCroppedImg(imageSrc: string, crop: any, rotation = 0): Promise
   );
 
   return canvas.toDataURL("image/jpeg");
+}
+
+// 工具函数：将 base64 转换为 File 对象
+async function base64ToFile(base64: string, filename: string): Promise<File> {
+  const response = await fetch(base64);
+  const blob = await response.blob();
+  return new File([blob], filename, { type: 'image/jpeg' });
 } 
