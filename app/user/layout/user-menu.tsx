@@ -29,6 +29,7 @@ import * as styles from "@dicebear/collection";
 import { Buffer } from "buffer";
 import type { Style } from "@dicebear/core";
 import { useEffect } from "react";
+import { OssAvatar } from "@/components/ui/oss-image";
 
 // 用户菜单项类型
 export interface UserMenuItem {
@@ -73,7 +74,18 @@ export function UserMenu() {
         } catch {
             avatarContent = <AvatarFallback>{userName?.[0] || "U"}</AvatarFallback>;
         }
+    } else if (profile?.image && profile?.avatarType === "custom") {
+        // 使用 OssAvatar 处理自定义头像（OSS 图片）
+        avatarContent = (
+            <OssAvatar
+                src={profile.image}
+                alt={userName}
+                size={40}
+                className="w-full h-full object-cover"
+            />
+        );
     } else if (profile?.image) {
+        // 处理其他类型的图片（非 OSS）
         avatarContent = <AvatarImage src={profile.image} alt={userName} className="w-full h-full object-cover" />;
     } else {
         avatarContent = <AvatarFallback>{userName?.[0] || "U"}</AvatarFallback>;

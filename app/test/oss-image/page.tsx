@@ -148,6 +148,17 @@ export default function OssImageTestPage() {
               <p>• <strong>安全访问:</strong> 私有存储桶通过签名 URL 访问，公共存储桶直接访问</p>
             </div>
           </div>
+
+          {/* 使用位置说明 */}
+          <div className="p-4 bg-green-50 rounded-lg">
+            <h4 className="font-semibold text-green-900 mb-2">OSS 图片组件使用位置</h4>
+            <div className="text-sm text-green-800 space-y-1">
+              <p>✅ <strong>个人资料页头像:</strong> `/user/profile` - 使用 `OssAvatar` 组件</p>
+              <p>✅ <strong>导航栏头像:</strong> 右上角用户菜单 - 使用 `OssAvatar` 组件</p>
+              <p>✅ <strong>头像选择对话框:</strong> 预览时使用原始 URL（临时）</p>
+              <p>✅ <strong>测试页面:</strong> `/test/oss-image` - 演示各种用法</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
