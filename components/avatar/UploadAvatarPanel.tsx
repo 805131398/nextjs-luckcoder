@@ -85,22 +85,17 @@ export default function UploadAvatarPanel({ value, onChange }: UploadAvatarPanel
         (progress) => setUploadProgress(progress)
       );
 
-      // 获取签名 URL 用于显示（如果存储桶是私有的）
-      let displayUrl = result.url;
-      try {
-        const signedUrl = await getOssSignedUrl(result.objectKey, 3600); // 1小时有效期
-        displayUrl = signedUrl;
-      } catch (error) {
-        console.warn('获取签名 URL 失败，使用原始 URL:', error);
-      }
+      // 存储原始的 OSS URL，而不是签名 URL
+      // 签名 URL 只在显示时动态获取，避免过期问题
+      const originalOssUrl = result.url;
 
-      // 更新头像 URL 为 OSS URL
+      // 更新头像 URL 为原始 OSS URL
       onChange({ 
-        avatarUrl: displayUrl,
+        avatarUrl: originalOssUrl,
         fileData: undefined // 清除 fileData，因为已经上传到 OSS
       });
 
-      console.log('头像上传成功:', displayUrl);
+      console.log('头像上传成功，存储原始 URL:', originalOssUrl);
     } catch (error) {
       console.error('上传失败:', error);
       alert('上传失败: ' + (error instanceof Error ? error.message : '未知错误'));

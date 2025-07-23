@@ -133,7 +133,19 @@ export default function OssImageTestPage() {
               <p><strong>加载状态:</strong> {isLoading ? "加载中" : "已完成"}</p>
               <p><strong>处理后的 URL:</strong> {imageUrl || "null"}</p>
               <p><strong>是否为 HTTPS:</strong> {imageUrl ? (imageUrl.startsWith('https:') ? "是" : "否") : "N/A"}</p>
+              <p><strong>是否为签名 URL:</strong> {imageUrl ? (imageUrl.includes('?') ? "是" : "否") : "N/A"}</p>
               {error && <p><strong>错误信息:</strong> {error}</p>}
+            </div>
+          </div>
+
+          {/* URL 类型说明 */}
+          <div className="p-4 bg-blue-50 rounded-lg">
+            <h4 className="font-semibold text-blue-900 mb-2">URL 类型说明</h4>
+            <div className="text-sm text-blue-800 space-y-1">
+              <p>• <strong>原始 OSS URL:</strong> 存储在数据库中的永久 URL</p>
+              <p>• <strong>签名 URL:</strong> 动态生成的临时访问 URL（带 ? 参数）</p>
+              <p>• <strong>缓存机制:</strong> 签名 URL 自动缓存，过期前 5 分钟重新获取</p>
+              <p>• <strong>安全访问:</strong> 私有存储桶通过签名 URL 访问，公共存储桶直接访问</p>
             </div>
           </div>
         </CardContent>
